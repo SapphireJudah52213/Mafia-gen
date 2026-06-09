@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mafia Role Generator</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#222;
+    color:white;
+    text-align:center;
+    padding:20px;
+}
+
+button{
+    padding:12px 24px;
+    font-size:18px;
+    margin:10px;
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+}
+
+input, textarea{
+    font-size:18px;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+}
+
+textarea{
+    width:90%;
+    max-width:500px;
+}
+
+#role{
+    font-size:42px;
+    font-weight:bold;
+    margin:30px;
+}
+
+.card{
+    background:#333;
+    padding:20px;
+    border-radius:12px;
+    max-width:600px;
+    margin:auto;
+}
+</style>
+</head>
+<body>
+
+<h1>Mafia Role Generator</h1>
+
+<!-- Setup Screen -->
+<div id="setup" class="card">
+
+    <h2>Game Setup</h2>
+
+    <p>Number of Players</p>
+
+    <input type="number" id="playerCount" min="3" value="5">
+
+    <br><br>
+
+    <button onclick="startGame()">Generate Roles</button>
+
+</div>
+
+<!-- Main Game -->
+<div id="game" style="display:none;">
+
+    <!-- Hidden Screen -->
+    <div id="hiddenScreen" class="card">
+
+        <h2 id="playerLabel"></h2>
+
+        <p>Pass the device to this player.</p>
+
+        <button onclick="revealRole()">Reveal My Role</button>
+
+    </div>
+
+    <!-- Role Reveal -->
+    <div id="revealedScreen" class="card" style="display:none;">
+
+        <h2>Your Role</h2>
+
+        <div id="role"></div>
+
+        <button onclick="hideRole()">Hide Role</button>
+
+    </div>
+
+    <!-- Action Entry -->
+    <div id="actionScreen" class="card" style="display:none;">
+
+        <h2 id="actionPlayerLabel"></h2>
+
+        <p>Enter your action:</p>
+
+        <textarea
+            id="actionInput"
+            rows="4"
+            placeholder="Example: Protect Player 4"
+        ></textarea>
+
+        <br><br>
+
+        <button onclick="submitAction()">Submit Action</button>
+
+    </div>
+
+</div>
+
+<!-- Finished Screen -->
+<div id="finished" class="card" style="display:none;">
+
+    <h2>All Players Finished</h2>
+
+    <p>The game can now begin.</p>
+
+    <button onclick="showActions()">Host: Reveal Actions</button>
+
+    <div id="actionResults"></div>
+
+</div>
+
+<script>
+
+let roles = [];
+let actions = [];
+let currentPlayer = 0;
+
+function shuffle(array){
+
+    for(let i=array.length-1;i>0;i--){
+
+        const j=Math.floor(Math.random()*(i+1));
+
+        [array[i],array[j]]=[array[j],array[i]];
+    }
+}
+
+function startGame(){
+
+    const count = parseInt(
+        document.getElementById("playerCount").value
+    );
+
+    if(count < 3){
+        alert("Need at least 3 players.");
+        return;
+    }
+
+    roles = [
+        "Mafia",
+        "Nurse"
+    ];
+
+    while(roles.length < count){
+        roles.push("Innocent");
+    }
+
+    shuffle(roles);
+
+    actions = [];
+    currentPlayer = 0;
+
+    document.getElementById("setup").style.display = "none";
+    document.getElementById("game").style.display = "block";
+
+    updatePlayerLabel();
+}
+
+function updatePlayerLabel(){
+
+    document.getElementById("playerLabel").textContent =
+        "Player " + (currentPlayer + 1);
+
+    document.getElementById("hiddenScreen").style.display =
+        "block";
+
+    document.getElementById("revealedScreen").style.display =
+        "none";
+
+    document.getElementById("actionScreen").style.display =
+        "none";
+}
+
+function revealRole(){
+
+    document.getElementById("role").textContent =
+        roles[currentPlayer];
+
+    document.getElementById("hiddenScreen").style.display =
+        "none";
+
+    document.getElementById("revealedScreen").style.display =
+        "block";
+}
+
+function hideRole(){
+
+    document.getElementById("revealedScreen").style.display =
+        "none";
+
+    document.getElementById("actionScreen").style.display =
+        "block";
+
+    document.getElementById("actionPlayerLabel").textContent =
+        "Player " + (currentPlayer + 1);
+}
+
+function submitAction(){
+
+    actions[currentPlayer] =
+        document.getElementById("actionInput").value.trim();
+
+    document.getElementById("actionInput").value = "";
+
+    currentPlayer++;
+
+    if(currentPlayer >= roles.length){
+
+        document.getElementById("game").style.display =
+            "none";
+
+        document.getElementById("finished").style.display =
+            "block";
+
+        return;
+    }
+
+    updatePlayerLabel();
+}
+
+function showActions(){
+
+    const password =
+        prompt("Enter Host Password");
+
+    if(password !== "host"){
+
+        alert("Incorrect password.");
+        return;
+    }
+
+    let html = "<h3>Submitted Actions</h3>";
+
+    for(let i=0;i<actions.length;i++){
+
+        html += `
+            <p>
+                <b>Player ${i+1}</b>:
+                ${actions[i] || "(No Action)"}
+            </p>
+        `;
+    }
+
+    document.getElementById("actionResults").innerHTML =
+        html;
+}
+
+</script>
+
+</body>
+</html>
