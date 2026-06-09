@@ -130,6 +130,8 @@ function showActionScreen(){
     html+=`<button class="playerButton" onclick="chooseProtect(${i})">Player ${i+1}</button>`;
    }
   }
+ }else if (r==="Butcher"){
+  html+=`<p>You're useless.</p><button onclick="nextPlayer()">Continue</button>`;
  }else{
   html+=`<p>No night action.</p><button onclick="nextPlayer()">Continue</button>`;
  }
