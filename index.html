@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mafia Night Game</title>
+<title>Mafia Game</title>
 
 <style>
 body{
@@ -49,15 +49,18 @@ input{
     width:250px;
     margin:8px auto;
 }
+
+.dead{
+    color:#ff6666;
+}
 </style>
 </head>
 <body>
 
-<h1>Mafia Night Game</h1>
+<h1>Mafia</h1>
 
 <!-- Setup -->
 <div id="setup" class="card">
-
     <h2>Game Setup</h2>
 
     <p>Number of Players</p>
@@ -66,23 +69,19 @@ input{
         type="number"
         id="playerCount"
         min="3"
-        value="5"
-    >
+        value="5">
 
     <br><br>
 
     <button onclick="startGame()">
-        Generate Roles
+        Start Game
     </button>
-
 </div>
 
 <!-- Main Game -->
 <div id="game" style="display:none;">
 
-    <!-- Pass Device Screen -->
     <div id="hiddenScreen" class="card">
-
         <h2 id="playerLabel"></h2>
 
         <p>
@@ -92,58 +91,56 @@ input{
         <button onclick="revealRole()">
             Reveal My Role
         </button>
-
     </div>
 
-    <!-- Role Screen -->
-    <div
-        id="revealedScreen"
-        class="card"
-        style="display:none;"
-    >
+    <div id="revealedScreen"
+         class="card"
+         style="display:none;">
 
         <h2>Your Role</h2>
 
         <div id="role"></div>
 
-        <button onclick="hideRole()">
+        <button onclick="showActionScreen()">
             Continue
         </button>
-
     </div>
 
-    <!-- Action Screen -->
-    <div
-        id="actionScreen"
-        class="card"
-        style="display:none;"
-    >
+    <div id="actionScreen"
+         class="card"
+         style="display:none;">
 
         <h2 id="actionPlayerLabel"></h2>
 
         <div id="actionArea"></div>
-
     </div>
 
 </div>
 
 <!-- Results -->
-<div
-    id="finished"
-    class="card"
-    style="display:none;"
->
+<div id="resultsScreen"
+     class="card"
+     style="display:none;">
 
-    <h2>Night Results</h2>
+    <h2 id="nightTitle"></h2>
 
     <div id="results"></div>
 
+    <br>
+
+    <button id="nextTurnBtn"
+            onclick="nextTurn()">
+        Next Turn
+    </button>
 </div>
 
 <script>
 
 let roles = [];
+let alive = [];
+
 let currentPlayer = 0;
+let turn = 1;
 
 let mafiaTarget = null;
 let nurseTarget = null;
@@ -152,7 +149,8 @@ function shuffle(array){
 
     for(let i=array.length-1;i>0;i--){
 
-        const j=Math.floor(
+        const j =
+        Math.floor(
             Math.random()*(i+1)
         );
 
@@ -173,7 +171,7 @@ function startGame(){
     if(count < 3){
 
         alert(
-            "At least 3 players are required."
+            "Need at least 3 players."
         );
 
         return;
@@ -184,8 +182,9 @@ function startGame(){
         "Nurse"
     ];
 
-    while(roles.length < count){
-
+    while(
+        roles.length < count
+    ){
         roles.push(
             "Innocent"
         );
@@ -193,29 +192,53 @@ function startGame(){
 
     shuffle(roles);
 
-    currentPlayer = 0;
+    alive = [];
 
-    mafiaTarget = null;
-    nurseTarget = null;
+    for(
+        let i=0;
+        i<count;
+        i++
+    ){
+        alive.push(true);
+    }
+
+    turn = 1;
+
+    currentPlayer = 0;
 
     document.getElementById(
         "setup"
-    ).style.display = "none";
+    ).style.display =
+    "none";
 
     document.getElementById(
         "game"
-    ).style.display = "block";
+    ).style.display =
+    "block";
 
     updatePlayerLabel();
 }
 
 function updatePlayerLabel(){
 
+    while(
+        currentPlayer < roles.length &&
+        !alive[currentPlayer]
+    ){
+        currentPlayer++;
+    }
+
+    if(
+        currentPlayer >= roles.length
+    ){
+        finishNight();
+        return;
+    }
+
     document.getElementById(
         "playerLabel"
     ).textContent =
-    "Player " +
-    (currentPlayer + 1);
+    `Player ${currentPlayer+1}`;
 
     document.getElementById(
         "hiddenScreen"
@@ -251,7 +274,7 @@ function revealRole(){
     "block";
 }
 
-function hideRole(){
+function showActionScreen(){
 
     document.getElementById(
         "revealedScreen"
@@ -266,13 +289,12 @@ function hideRole(){
     document.getElementById(
         "actionPlayerLabel"
     ).textContent =
-    "Player " +
-    (currentPlayer + 1);
+    `Player ${currentPlayer+1}`;
+
+    let html = "";
 
     const role =
     roles[currentPlayer];
-
-    let html = "";
 
     if(role === "Mafia"){
 
@@ -285,20 +307,24 @@ function hideRole(){
             i++
         ){
 
-            if(i !== currentPlayer){
+            if(
+                alive[i] &&
+                i !== currentPlayer
+            ){
 
                 html += `
                 <button
                 class="playerButton"
                 onclick="chooseKill(${i})">
-                    Player ${i+1}
+                Player ${i+1}
                 </button>
                 `;
             }
         }
 
-    }
-    else if(role === "Nurse"){
+    }else if(
+        role === "Nurse"
+    ){
 
         html +=
         "<p>Select a player to protect:</p>";
@@ -309,26 +335,28 @@ function hideRole(){
             i++
         ){
 
-            html += `
-            <button
-            class="playerButton"
-            onclick="chooseProtect(${i})">
+            if(alive[i]){
+
+                html += `
+                <button
+                class="playerButton"
+                onclick="chooseProtect(${i})">
                 Player ${i+1}
-            </button>
-            `;
+                </button>
+                `;
+            }
         }
 
-    }
-    else{
+    }else{
 
         html += `
         <p>
-            You have no night action.
+        You have no action.
         </p>
 
         <button
         onclick="nextPlayer()">
-            Continue
+        Continue
         </button>
         `;
     }
@@ -356,14 +384,6 @@ function nextPlayer(){
 
     currentPlayer++;
 
-    if(
-        currentPlayer >= roles.length
-    ){
-
-        finishNight();
-        return;
-    }
-
     updatePlayerLabel();
 }
 
@@ -375,50 +395,62 @@ function finishNight(){
     "none";
 
     document.getElementById(
-        "finished"
+        "resultsScreen"
     ).style.display =
     "block";
+
+    document.getElementById(
+        "nightTitle"
+    ).textContent =
+    `Night ${turn} Results`;
 
     let result = "";
 
     if(
-        mafiaTarget === null
+        mafiaTarget !== null &&
+        mafiaTarget !== nurseTarget
     ){
 
-        result = `
-        <h3>
-            No Mafia Action
-        </h3>
-        `;
-    }
-    else if(
-        mafiaTarget === nurseTarget
-    ){
+        alive[mafiaTarget] =
+        false;
 
-        result = `
+        result += `
         <h3>
-            Nobody Died
+        Player ${mafiaTarget+1}
+        Died
         </h3>
-
-        <p>
-            The Nurse successfully
-            protected Player
-            ${mafiaTarget + 1}.
-        </p>
         `;
     }
     else{
 
-        result = `
+        result += `
         <h3>
-            Player
-            ${mafiaTarget + 1}
-            Died
+        Nobody Died
         </h3>
+        `;
+    }
 
-        <p>
-            The Mafia successfully
-            eliminated their target.
+    result +=
+    "<h3>Living Players</h3>";
+
+    for(
+        let i=0;
+        i<roles.length;
+        i++
+    ){
+
+        result += `
+        <p class="${
+            alive[i]
+            ? ""
+            : "dead"
+        }">
+        Player ${i+1}
+        ${
+            alive[i]
+            ? "(Alive)"
+            : "(Dead)"
+        }
         </p>
         `;
     }
@@ -427,6 +459,100 @@ function finishNight(){
         "results"
     ).innerHTML =
     result;
+
+    checkWinCondition();
+}
+
+function checkWinCondition(){
+
+    let mafiaAlive = 0;
+    let innocentsAlive = 0;
+
+    for(
+        let i=0;
+        i<roles.length;
+        i++
+    ){
+
+        if(!alive[i])
+            continue;
+
+        if(
+            roles[i] === "Mafia"
+        ){
+
+            mafiaAlive++;
+
+        }else{
+
+            innocentsAlive++;
+        }
+    }
+
+    if(mafiaAlive === 0){
+
+        document.getElementById(
+            "results"
+        ).innerHTML += `
+        <h2>
+        Innocents Win!
+        </h2>
+        `;
+
+        document.getElementById(
+            "nextTurnBtn"
+        ).style.display =
+        "none";
+
+        return;
+    }
+
+    if(
+        mafiaAlive >= innocentsAlive
+    ){
+
+        document.getElementById(
+            "results"
+        ).innerHTML += `
+        <h2>
+        Mafia Wins!
+        </h2>
+        `;
+
+        document.getElementById(
+            "nextTurnBtn"
+        ).style.display =
+        "none";
+
+        return;
+    }
+
+    document.getElementById(
+        "nextTurnBtn"
+    ).style.display =
+    "inline-block";
+}
+
+function nextTurn(){
+
+    turn++;
+
+    mafiaTarget = null;
+    nurseTarget = null;
+
+    currentPlayer = 0;
+
+    document.getElementById(
+        "resultsScreen"
+    ).style.display =
+    "none";
+
+    document.getElementById(
+        "game"
+    ).style.display =
+    "block";
+
+    updatePlayerLabel();
 }
 
 </script>
