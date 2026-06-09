@@ -3,155 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mafia Role Generator</title>
+<title>Mafia Night Game</title>
 
 <style>
 body{
-    font-family: Arial, sans-serif;
+    font-family:Arial,sans-serif;
     background:#222;
     color:white;
     text-align:center;
     padding:20px;
 }
 
+.card{
+    background:#333;
+    padding:20px;
+    border-radius:12px;
+    max-width:700px;
+    margin:auto;
+}
+
 button{
     padding:12px 24px;
     font-size:18px;
-    margin:10px;
+    margin:8px;
     cursor:pointer;
     border:none;
     border-radius:8px;
 }
 
-input, textarea{
-    font-size:18px;
+input{
     padding:10px;
+    font-size:18px;
     border-radius:8px;
     border:none;
 }
 
-textarea{
-    width:90%;
-    max-width:500px;
-}
-
 #role{
-    font-size:42px;
+    font-size:48px;
     font-weight:bold;
-    margin:30px;
+    margin:25px;
 }
 
-.card{
-    background:#333;
-    padding:20px;
-    border-radius:12px;
-    max-width:600px;
-    margin:auto;
+.playerButton{
+    display:block;
+    width:250px;
+    margin:8px auto;
 }
 </style>
 </head>
 <body>
 
-<h1>Mafia Role Generator</h1>
+<h1>Mafia Night Game</h1>
 
-<!-- Setup Screen -->
+<!-- Setup -->
 <div id="setup" class="card">
 
     <h2>Game Setup</h2>
 
     <p>Number of Players</p>
 
-    <input type="number" id="playerCount" min="3" value="5">
+    <input
+        type="number"
+        id="playerCount"
+        min="3"
+        value="5"
+    >
 
     <br><br>
 
-    <button onclick="startGame()">Generate Roles</button>
+    <button onclick="startGame()">
+        Generate Roles
+    </button>
 
 </div>
 
 <!-- Main Game -->
 <div id="game" style="display:none;">
 
-    <!-- Hidden Screen -->
+    <!-- Pass Device Screen -->
     <div id="hiddenScreen" class="card">
 
         <h2 id="playerLabel"></h2>
 
-        <p>Pass the device to this player.</p>
+        <p>
+            Pass the device to this player.
+        </p>
 
-        <button onclick="revealRole()">Reveal My Role</button>
+        <button onclick="revealRole()">
+            Reveal My Role
+        </button>
 
     </div>
 
-    <!-- Role Reveal -->
-    <div id="revealedScreen" class="card" style="display:none;">
+    <!-- Role Screen -->
+    <div
+        id="revealedScreen"
+        class="card"
+        style="display:none;"
+    >
 
         <h2>Your Role</h2>
 
         <div id="role"></div>
 
-        <button onclick="hideRole()">Hide Role</button>
+        <button onclick="hideRole()">
+            Continue
+        </button>
 
     </div>
 
-    <!-- Action Entry -->
-    <div id="actionScreen" class="card" style="display:none;">
+    <!-- Action Screen -->
+    <div
+        id="actionScreen"
+        class="card"
+        style="display:none;"
+    >
 
         <h2 id="actionPlayerLabel"></h2>
 
-        <p>Enter your action:</p>
-
-        <textarea
-            id="actionInput"
-            rows="4"
-            placeholder="Example: Protect Player 4"
-        ></textarea>
-
-        <br><br>
-
-        <button onclick="submitAction()">Submit Action</button>
+        <div id="actionArea"></div>
 
     </div>
 
 </div>
 
-<!-- Finished Screen -->
-<div id="finished" class="card" style="display:none;">
+<!-- Results -->
+<div
+    id="finished"
+    class="card"
+    style="display:none;"
+>
 
-    <h2>All Players Finished</h2>
+    <h2>Night Results</h2>
 
-    <p>The game can now begin.</p>
-
-    <button onclick="showActions()">Host: Reveal Actions</button>
-
-    <div id="actionResults"></div>
+    <div id="results"></div>
 
 </div>
 
 <script>
 
 let roles = [];
-let actions = [];
 let currentPlayer = 0;
+
+let mafiaTarget = null;
+let nurseTarget = null;
 
 function shuffle(array){
 
     for(let i=array.length-1;i>0;i--){
 
-        const j=Math.floor(Math.random()*(i+1));
+        const j=Math.floor(
+            Math.random()*(i+1)
+        );
 
-        [array[i],array[j]]=[array[j],array[i]];
+        [array[i],array[j]] =
+        [array[j],array[i]];
     }
 }
 
 function startGame(){
 
-    const count = parseInt(
-        document.getElementById("playerCount").value
+    const count =
+    parseInt(
+        document.getElementById(
+            "playerCount"
+        ).value
     );
 
     if(count < 3){
-        alert("Need at least 3 players.");
+
+        alert(
+            "At least 3 players are required."
+        );
+
         return;
     }
 
@@ -161,107 +185,248 @@ function startGame(){
     ];
 
     while(roles.length < count){
-        roles.push("Innocent");
+
+        roles.push(
+            "Innocent"
+        );
     }
 
     shuffle(roles);
 
-    actions = [];
     currentPlayer = 0;
 
-    document.getElementById("setup").style.display = "none";
-    document.getElementById("game").style.display = "block";
+    mafiaTarget = null;
+    nurseTarget = null;
+
+    document.getElementById(
+        "setup"
+    ).style.display = "none";
+
+    document.getElementById(
+        "game"
+    ).style.display = "block";
 
     updatePlayerLabel();
 }
 
 function updatePlayerLabel(){
 
-    document.getElementById("playerLabel").textContent =
-        "Player " + (currentPlayer + 1);
+    document.getElementById(
+        "playerLabel"
+    ).textContent =
+    "Player " +
+    (currentPlayer + 1);
 
-    document.getElementById("hiddenScreen").style.display =
-        "block";
+    document.getElementById(
+        "hiddenScreen"
+    ).style.display =
+    "block";
 
-    document.getElementById("revealedScreen").style.display =
-        "none";
+    document.getElementById(
+        "revealedScreen"
+    ).style.display =
+    "none";
 
-    document.getElementById("actionScreen").style.display =
-        "none";
+    document.getElementById(
+        "actionScreen"
+    ).style.display =
+    "none";
 }
 
 function revealRole(){
 
-    document.getElementById("role").textContent =
-        roles[currentPlayer];
+    document.getElementById(
+        "role"
+    ).textContent =
+    roles[currentPlayer];
 
-    document.getElementById("hiddenScreen").style.display =
-        "none";
+    document.getElementById(
+        "hiddenScreen"
+    ).style.display =
+    "none";
 
-    document.getElementById("revealedScreen").style.display =
-        "block";
+    document.getElementById(
+        "revealedScreen"
+    ).style.display =
+    "block";
 }
 
 function hideRole(){
 
-    document.getElementById("revealedScreen").style.display =
-        "none";
+    document.getElementById(
+        "revealedScreen"
+    ).style.display =
+    "none";
 
-    document.getElementById("actionScreen").style.display =
-        "block";
+    document.getElementById(
+        "actionScreen"
+    ).style.display =
+    "block";
 
-    document.getElementById("actionPlayerLabel").textContent =
-        "Player " + (currentPlayer + 1);
+    document.getElementById(
+        "actionPlayerLabel"
+    ).textContent =
+    "Player " +
+    (currentPlayer + 1);
+
+    const role =
+    roles[currentPlayer];
+
+    let html = "";
+
+    if(role === "Mafia"){
+
+        html +=
+        "<p>Select a player to eliminate:</p>";
+
+        for(
+            let i=0;
+            i<roles.length;
+            i++
+        ){
+
+            if(i !== currentPlayer){
+
+                html += `
+                <button
+                class="playerButton"
+                onclick="chooseKill(${i})">
+                    Player ${i+1}
+                </button>
+                `;
+            }
+        }
+
+    }
+    else if(role === "Nurse"){
+
+        html +=
+        "<p>Select a player to protect:</p>";
+
+        for(
+            let i=0;
+            i<roles.length;
+            i++
+        ){
+
+            html += `
+            <button
+            class="playerButton"
+            onclick="chooseProtect(${i})">
+                Player ${i+1}
+            </button>
+            `;
+        }
+
+    }
+    else{
+
+        html += `
+        <p>
+            You have no night action.
+        </p>
+
+        <button
+        onclick="nextPlayer()">
+            Continue
+        </button>
+        `;
+    }
+
+    document.getElementById(
+        "actionArea"
+    ).innerHTML = html;
 }
 
-function submitAction(){
+function chooseKill(player){
 
-    actions[currentPlayer] =
-        document.getElementById("actionInput").value.trim();
+    mafiaTarget = player;
 
-    document.getElementById("actionInput").value = "";
+    nextPlayer();
+}
+
+function chooseProtect(player){
+
+    nurseTarget = player;
+
+    nextPlayer();
+}
+
+function nextPlayer(){
 
     currentPlayer++;
 
-    if(currentPlayer >= roles.length){
+    if(
+        currentPlayer >= roles.length
+    ){
 
-        document.getElementById("game").style.display =
-            "none";
-
-        document.getElementById("finished").style.display =
-            "block";
-
+        finishNight();
         return;
     }
 
     updatePlayerLabel();
 }
 
-function showActions(){
+function finishNight(){
 
-    const password =
-        prompt("Enter Host Password");
+    document.getElementById(
+        "game"
+    ).style.display =
+    "none";
 
-    if(password !== "host"){
+    document.getElementById(
+        "finished"
+    ).style.display =
+    "block";
 
-        alert("Incorrect password.");
-        return;
+    let result = "";
+
+    if(
+        mafiaTarget === null
+    ){
+
+        result = `
+        <h3>
+            No Mafia Action
+        </h3>
+        `;
     }
+    else if(
+        mafiaTarget === nurseTarget
+    ){
 
-    let html = "<h3>Submitted Actions</h3>";
+        result = `
+        <h3>
+            Nobody Died
+        </h3>
 
-    for(let i=0;i<actions.length;i++){
+        <p>
+            The Nurse successfully
+            protected Player
+            ${mafiaTarget + 1}.
+        </p>
+        `;
+    }
+    else{
 
-        html += `
-            <p>
-                <b>Player ${i+1}</b>:
-                ${actions[i] || "(No Action)"}
-            </p>
+        result = `
+        <h3>
+            Player
+            ${mafiaTarget + 1}
+            Died
+        </h3>
+
+        <p>
+            The Mafia successfully
+            eliminated their target.
+        </p>
         `;
     }
 
-    document.getElementById("actionResults").innerHTML =
-        html;
+    document.getElementById(
+        "results"
+    ).innerHTML =
+    result;
 }
 
 </script>
